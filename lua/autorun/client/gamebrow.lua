@@ -22,6 +22,16 @@ local function OpenGameBrowser()
 		browser:SetCurrentFolder(folder)
 	end
 	
+	function browser:OnRightClick(filePath, _) 
+		local menu = DermaMenu() 
+		local copy = menu:AddOption('复制', function() 
+			SetClipboardText(filePath) 
+		end)
+		copy:SetImage('materials/icon16/application_double.png')
+		
+		menu:Open()
+	end
+
 	return GameBrowser
 end
 
