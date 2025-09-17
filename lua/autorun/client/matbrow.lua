@@ -56,7 +56,41 @@ local function SetMaterial(mat)
 	end
 end
 
-
+-- 创建文本浏览器函数
+function CreateTextBrowser(title, filePath)
+    -- 创建主窗口
+    local frame = vgui.Create("DFrame")
+    frame:SetTitle(title or "文本浏览器")
+    frame:SetSize(400, 300)
+    frame:Center()
+    frame:MakePopup()
+    
+    -- 创建滚动面板（用于支持长文本滚动）
+    local scroll = vgui.Create("DScrollPanel", frame)
+    scroll:Dock(FILL)
+    
+    -- 创建文本显示区域
+    local textPanel = vgui.Create("DLabel", scroll)
+    textPanel:Dock(TOP)
+    textPanel:SetFont("DermaDefaultBold") -- 设置字体
+    textPanel:SetTextColor(Color(255, 255, 255)) -- 文本颜色
+    textPanel:SetWrap(true) -- 自动换行
+    textPanel:SetContentAlignment(7) -- 左对齐
+    textPanel:SetWide(frame:GetWide() - 20) -- 宽度
+    
+    -- 尝试读取文件内容
+    if filePath and file.Exists(filePath, "GAME") then
+        local content = file.Read(filePath, "GAME")
+        textPanel:SetText(content or "文件内容为空")
+    else
+        textPanel:SetText("无法找到指定文件: " .. (filePath or "未知路径"))
+    end
+    
+    -- 调整文本面板高度以适应内容
+    textPanel:SizeToContentsY()
+    
+    return frame
+end
 ----------------------------
 local MaterialsBrowser
 local page = 1
@@ -79,14 +113,6 @@ local function OpenMaterialsBrowser()
 	local Tabs = vgui.Create('DPropertySheet', MaterialsBrowser)
 	local ViewPort = vgui.Create('DPanel', MaterialsBrowser)
 	local Div = vgui.Create('DHorizontalDivider', MaterialsBrowser)
-	local SubmitBtn = vgui.Create('DButton', MaterialsBrowser)
-
-	SubmitBtn:SetText('提交')
-	SubmitBtn:SetHeight(30)
-	SubmitBtn:Dock(BOTTOM)
-	SubmitBtn.DoClick = function()
-		MaterialsBrowser:Remove()
-	end
 
 	Div:Dock(FILL)
 	Div:SetLeft(Tabs)
@@ -225,13 +251,18 @@ local function OpenMaterialsBrowser()
 		menu:Open()
 	end
 
+	function FileBrowser:OnDoubleClick(filePath, selectedPanel)
+		if string.EndsWith(filePath, '.vmt') then
+			CreateTextBrowser(filePath, filePath)
+		end
+	end
+
 	function MaterialsBrowser:SetCurrentFolder(folder) 
 		FileBrowser:SetCurrentFolder(folder)
 	end
 
-
-	Tabs:AddSheet('插件', AddonBrowser, 'icon16/bricks.png', false, false, '')
 	Tabs:AddSheet('游戏', GameMatBrowser, 'materials/icon16/add.png', false, false, '')
+	Tabs:AddSheet('插件', AddonBrowser, 'icon16/bricks.png', false, false, '')
 	
 	AddonBrowser:Search(filterinput)
 	AddonBrowser:SetPage(page)
@@ -245,3 +276,9 @@ concommand.Add('rb_open_matbrow', function(ply, cmd, args)
 	browser:SetCurrentFolder(folder)
 end)
 
+
+
+
+-- 示例：创建一个显示"example.txt"文件的文本浏览器
+-- 注意：文件需要放在garrysmod/data/目录下
+-- CreateTextBrowser("我的文本文件", "example.txt")
